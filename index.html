@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+        }
+
+        /* Начальный экран */
+        .start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #2c2c2c;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .theme-button {
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            margin: 20px;
+            cursor: pointer;
+            border: 2px solid #ff7f00;
+            border-radius: 8px;
+            background-color: #333333;
+            color: #ff7f00;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .theme-button:hover {
+            background-color: #ff7f00;
+            color: #333333;
+            border-color: #333333;
+        }
+
+        /* Игровой экран */
+        .game-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #2c2c2c;
+        }
+
+        .grid-container {
+            display: flex;
+            gap: 50px;
+        }
+
+        .grid-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(8, 100px);
+            grid-template-rows: repeat(8, 100px);
+            gap: 3px;
+            position: relative;
+            border-radius: 10px;
+            border: 2px solid #ff7f00;
+            padding: 5px;
+            background-color: #333;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #ff7f00;
+            cursor: pointer;
+            background-color: #444;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .cell:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255, 127, 0, 0.7);
+        }
+
+        .cell.selected {
+            border: 2px solid green;
+        }
+
+        .cell img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hidden {
+            background-color: #111;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none;
+        }
+
+        .label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+            color: #ff7f00;
+        }
+
+        .back-button {
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-top: 20px;
+            background-color: #ff7f00;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background-color: #e07b00;
+        }
+    </style>
+</head>
+<body>
+    <!-- Начальный экран -->
+    <div class="start-screen" id="start-screen">
+        <button class="theme-button" onclick="startGame('football')">Футбол</button>
+        <button class="theme-button" onclick="startGame('fortnite')">Fortnite</button>
+    </div>
+
+    <!-- Игровой экран -->
+    <div class="game-screen" id="game-screen">
+        <div class="grid-container">
+            <div class="grid-wrapper">
+                <div class="grid" id="player-grid"></div>
+            </div>
+            <div class="grid-wrapper">
+                <div class="grid" id="opponent-grid"></div>
+            </div>
+        </div>
+        <button class="back-button" onclick="backToThemes()">Вернуться назад</button>
+    </div>
+
+    <script>
+        const images = {
+            football: [
+                "https://i.postimg.cc/XJy6t4dM/10-Casemiro.jpg",
+                "https://i.postimg.cc/Bvb0cxvn/11-Achraf-Hakimi.jpg",
+                "https://i.postimg.cc/q7FdmztX/12-Jude-Bellingham.jpg",
+                "https://i.postimg.cc/W12jtRLr/13-Marcus-Rashford.jpg",
+                "https://i.postimg.cc/pLqvF0RS/15-Son-Heung-min.jpg",
+                "https://i.postimg.cc/4NRXk7WW/16-Harry-Kane.jpg",
+                "https://i.postimg.cc/tCdpXqfp/17-Sadio-Mane.jpg",
+                "https://i.postimg.cc/brk8Spw0/18-Bukayo-Saka.jpg",
+                "https://i.postimg.cc/gcZGTqHw/19-Angel-di-Maria.jpg",
+                "https://i.postimg.cc/qvMV48yx/2-Kylian-Mbappe.jpg",
+                "https://i.postimg.cc/3Ry37gMc/20-Pedri.jpg",
+                "https://i.postimg.cc/PqVdBS7D/21-Gavi.jpg",
+                "https://i.postimg.cc/LXr2sn26/22-Marquinhos.jpg",
+                "https://i.postimg.cc/wjHxJyJ1/23-Phil-Foden.jpg",
+                "https://i.postimg.cc/9QpmBmtJ/24-Zlatan-Ibrahimovic.jpg",
+                "https://i.postimg.cc/6Qp9jkMw/25-Antoine-Griezmann.jpg",
+                "https://i.postimg.cc/qM2MzXtf/26-Theo-Hernandez.jpg",
+                "https://i.postimg.cc/w38PCNHL/27-Manuel-Neuer.jpg",
+                "https://i.postimg.cc/1RnzZZs3/28-Gareth-Bale.jpg",
+                "https://i.postimg.cc/66kpW1pL/29-Bernardo-Silva.jpg",
+                "https://i.postimg.cc/HLVq7dSJ/3-Cristiano-Ronaldo.jpg",
+                "https://i.postimg.cc/rst3Zj6q/30-Raheem-Sterling.jpg",
+                "https://i.postimg.cc/PxJBYh2p/31-Trent-Alexander-Arnold.jpg",
+                "https://i.postimg.cc/qRFWGY5m/32-Alphonso-Davies.jpg",
+                "https://i.postimg.cc/7LHvPSzN/33-Ousmane-Dembele.jpg",
+                "https://i.postimg.cc/6pLJNM83/34-Ederson-Moraes.jpg",
+                "https://i.postimg.cc/YSb5vjfB/35-Antonio-Rudiger.jpg",
+                "https://i.postimg.cc/XY0ShR7m/36-Frenkie-de-Jong.jpg",
+                "https://i.postimg.cc/c43GFxZf/37-Ngolo-Kante.jpg",
+                "https://i.postimg.cc/hvkWKw8J/38-Joao-Cancelo.jpg",
+                "https://i.postimg.cc/dQpKRkMq/39-Paul-Pogba.jpg",
+                "https://i.postimg.cc/hP0WkCzG/4-Neymar.jpg",
+                "https://i.postimg.cc/V6HPV5dW/40-Joshua-Kimmich.jpg",
+                "https://i.postimg.cc/Gt8nwrDw/41-Christian-Pulisic.jpg",
+                "https://i.postimg.cc/rmpLj5Fp/42-Thibaut-Courtois.jpg",
+                "https://i.postimg.cc/TPfxyZzg/43-Lautaro-Martinez.jpg",
+                "https://i.postimg.cc/9fbhyL2S/44-Kyle-Walker.jpg",
+                "https://i.postimg.cc/3xg7xKc3/45-Riyad-Mahrez.jpg",
+                "https://i.postimg.cc/GhTd6PP8/46-Paulo-Dybala.jpg",
+                "https://i.postimg.cc/nVPndSmf/47-Keylor-Navas.jpg",
+                "https://i.postimg.cc/wMZH73zj/48-Toni-Kroos.jpg",
+                "https://i.postimg.cc/0ygPv6Zt/49-Hugo-Lloris.jpg",
+                "https://i.postimg.cc/jSgV5Lh0/5-Erling-Haaland.jpg",
+                "https://i.postimg.cc/brspykK5/50-Romelu-Lukaku.jpg",
+                "https://i.postimg.cc/yYKCrqN5/6-Luka-Modric.jpg",
+                "https://i.postimg.cc/T2gX92Tg/7-Kevin-De-Bruyne.jpg",
+                "https://i.postimg.cc/PJWsryS2/8-Robert-Lewandowski.jpg",
+                "https://i.postimg.cc/Bb9f0kBj/9-Karim-Benzema.jpg",
+                "https://i.postimg.cc/XJy6t4dM/10-Casemiro.jpg"
+            ],
+            fortnite: [
+                "https://i.postimg.cc/3RtMRB34/background.png",
+                "https://i.postimg.cc/PxXsTcnn/background-1.png",
+                "https://i.postimg.cc/1tBSFSrz/background-10.png",
+                "https://i.postimg.cc/cH0Z6CYj/background-11.png",
+                "https://i.postimg.cc/k5xqnKVK/background-12.png",
+                "https://i.postimg.cc/7Lvq8mLq/background-13.png",
+                "https://i.postimg.cc/8zfT0qNy/background-14.png",
+                "https://i.postimg.cc/DyM252kJ/background-15.png",
+                "https://i.postimg.cc/Wb3NMdKc/background-16.png",
+                "https://i.postimg.cc/rygy01f9/background-17.png",
+                "https://i.postimg.cc/j28RpTD1/background-18.png",
+                "https://i.postimg.cc/T12RN13m/background-19.png",
+                "https://i.postimg.cc/yNXCqK5T/background-2.png",
+                "https://i.postimg.cc/ZRxbLp44/background-20.png",
+                "https://i.postimg.cc/QM5xHvzB/background-21.png",
+                "https://i.postimg.cc/gJWcRN9g/background-22.png",
+                "https://i.postimg.cc/nhNhVn3b/background-23.png",
+                "https://i.postimg.cc/8z7CV7Bm/background-24.png",
+                "https://i.postimg.cc/zDkvwZGK/background-25.png",
+                "https://i.postimg.cc/022QcWz3/background-26.png",
+                "https://i.postimg.cc/15CzTG6z/background-27.png",
+                "https://i.postimg.cc/mkVrTM58/background-28.png",
+                "https://i.postimg.cc/QMrZnC6t/background-3.png",
+                "https://i.postimg.cc/qvKdLyxS/background-4.png",
+                "https://i.postimg.cc/c42SwXwf/background-5.png",
+                "https://i.postimg.cc/Y2XkqpSn/background-6.png",
+                "https://i.postimg.cc/yYkKDwgV/background-7.png",
+                "https://i.postimg.cc/J0dWTQgV/background-8.png",
+                "https://i.postimg.cc/d30Ymf5j/background-9.png",
+                "https://i.postimg.cc/B6Vhkwqg/videoframe-148.png",
+                "https://i.postimg.cc/8Cb9KHJK/videoframe-2950.png",
+                "https://i.postimg.cc/Y9qVJWQp/videoframe-3028.png",
+                "https://i.postimg.cc/wBF4cjZn/videoframe-3094.png",
+                "https://i.postimg.cc/x8ZWG1J9/videoframe-3127.png",
+                "https://i.postimg.cc/FH32cm9Q/videoframe-3171.png",
+                "https://i.postimg.cc/6qFm2bg3/videoframe-3211.png",
+                "https://i.postimg.cc/43GjQMdH/videoframe-3272.png",
+                "https://i.postimg.cc/Z58Mnccb/videoframe-3380.png",
+                "https://i.postimg.cc/ryHbPzsk/videoframe-3427.png",
+                "https://i.postimg.cc/gkX9z8Qj/videoframe-3439.png",
+                "https://i.postimg.cc/rmnbcw95/videoframe-3455.png",
+                "https://i.postimg.cc/GhZWH9nQ/videoframe-3513.png",
+                "https://i.postimg.cc/XqB2bcq0/videoframe-6446.png",
+                "https://i.postimg.cc/3NkqwQLV/videoframe-6879.png",
+                "https://i.postimg.cc/qRRbmddq/videoframe-7246.png",
+                "https://i.postimg.cc/HkDNTKbv/videoframe-7588.png",
+                "https://i.postimg.cc/Lsm011Cz/videoframe-7606.png",
+                "https://i.postimg.cc/ZnnGydqf/videoframe-7672.png",
+                "https://i.postimg.cc/nVwbf0dN/videoframe-7771.png"
+            ]
+        };
+
+        let selectedCell = null; // Хранит выбранную клетку игрока
+
+        function startGame(theme) {
+            const startScreen = document.getElementById('start-screen');
+            const gameScreen = document.getElementById('game-screen');
+
+            startScreen.style.display = 'none'; // Скрываем начальный экран
+            gameScreen.style.display = 'flex'; // Показываем игровой экран
+
+            generateGrid("player-grid", images[theme]); // Генерация сетки игрока
+            generateGrid("opponent-grid", images[theme], true); // Генерация сетки противника
+        }
+
+        function generateGrid(gridId, images, isOpponent = false) {
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = ''; // Очищаем сетку перед генерацией
+            let imageIndex = 0;
+
+            for (let i = 0; i <= 7; i++) {
+                for (let j = 0; j <= 7; j++) {
+                    if (i === 0 && j === 0) {
+                        grid.innerHTML += `<div class="label"></div>`;
+                    } else if (i === 0) {
+                        grid.innerHTML += `<div class="label">${j}</div>`;
+                    } else if (j === 0) {
+                        grid.innerHTML += `<div class="label">${String.fromCharCode(64 + i)}</div>`;
+                    } else {
+                        if (imageIndex < images.length) {
+                            const imageHTML = `<img src="${images[imageIndex]}" alt="Image"/>`;
+                            grid.innerHTML += ` 
+                                <div class='cell' onclick="toggleCell(this, '${gridId}')">
+                                    ${imageHTML}
+                                    ${isOpponent ? `<div class="hidden"></div>` : ''} 
+                                </div>
+                            `;
+                            imageIndex++;
+                        }
+                    }
+                }
+            }
+        }
+
+        function toggleCell(cell, gridId) {
+            if (gridId === 'player-grid') {
+                // Если это сетка игрока, разрешаем выделять клетки
+                if (selectedCell) {
+                    selectedCell.classList.remove('selected');
+                }
+                selectedCell = cell;
+                cell.classList.add('selected');
+            } else if (gridId === 'opponent-grid') {
+                const hiddenDiv = cell.querySelector('.hidden');
+                if (hiddenDiv) {
+                    hiddenDiv.style.display = hiddenDiv.style.display === 'none' ? 'block' : 'none';
+                }
+            }
+        }
+
+        function backToThemes() {
+            const startScreen = document.getElementById('start-screen');
+            const gameScreen = document.getElementById('game-screen');
+
+            startScreen.style.display = 'flex'; // Показываем начальный экран
+            gameScreen.style.display = 'none'; // Скрываем игровой экран
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
